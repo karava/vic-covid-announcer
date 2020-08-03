@@ -1,4 +1,10 @@
-#!/usr/bin/env python
+
+# coding: utf-8
+
+# # Setup
+
+# In[158]:
+
 
 import requests
 from bs4 import BeautifulSoup
@@ -6,12 +12,20 @@ from datetime import date
 import json
 import os
 from twilio.rest import Client
+# https://chrisyeh96.github.io/2017/08/08/definitive-guide-python-imports.html
 import config
+
 URL = "https://www.dhhs.vic.gov.au/coronavirus"
 OUTPUT_FILE = "./output/output.txt"
+
+# Your Account Sid and Auth Token from twilio.com/console
 account_sid = config.TWILIO_ACCOUNT_SID
 auth_token = config.TWILIO_AUTH_TOKEN
 client = Client(account_sid, auth_token)
+
+
+# In[159]:
+
 
 def checkCurrentNumbersFromWeb():
     page = requests.get(URL)
@@ -29,6 +43,7 @@ def check_if_updated(updated_date):
     if os.path.getsize(OUTPUT_FILE) == 0:
         print("[DEBUG] Empty file")
         return False
+    
     with open(OUTPUT_FILE, 'r') as f:
         data = json.loads(f.read())
         if updated_date in data.keys() and 'VIC' in data[updated_date].keys():
@@ -44,17 +59,20 @@ def write_to_file(updated_date, number):
             data = json.loads(f.read())
     else:
         data = {}
-    with open(OUTPUT_FILE, 'w') as f:
         data[updated_date] = {}
+    
+    with open(OUTPUT_FILE, 'w') as f:
         data[updated_date]["VIC"] = number
         json.dump(data,f)
         print("[DEBUG] Update saved to file")
 
 def sendSms(comment, number):
-    sms_body = f"CORONVIRUS UPDATE\n"
-    sms_body += f"{comment}\n VIC: {number}"
+    sms_body = f"{comment}\n VIC: {number}"
     client.messages.create(body=sms_body, from_=config.FROM_NUMBER, to=config.TO_NUMBER)
-    print("[DEBUG] Sending SMS update")
+
+
+# In[160]:
+
 
 def main():
     comment, updated_date, number = checkCurrentNumbersFromWeb()
@@ -62,9 +80,15 @@ def main():
         write_to_file(updated_date, number)
         sendSms(comment, number)
 
+
+# In[161]:
+
+
 main()
 
+
+# In[146]:
+
+
 os.path.getsize(OUTPUT_FILE)
-
-
 
